@@ -1,0 +1,588 @@
+
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>क्रिकेट मंच: हिंदी क्रिकेट समाचार</title>
+    <script src="https://cdn.tailwindcss.com" onerror="console.error('Error loading Tailwind CSS CDN.');"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet" onerror="console.error('Error loading Noto Sans Devanagari font.');">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" onerror="console.error('Error loading Font Awesome CSS.');">
+    <style>
+        body {
+            font-family: 'Noto Sans Devanagari', sans-serif; /* Changed font */
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        .nav-link.active {
+            border-bottom: 2px solid #ef4444; /* Red-500 */
+            color: #ef4444;
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            flex-direction: column;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #ef4444;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .article-card {
+            cursor: pointer; /* Indicate clickability */
+        }
+        /* Styling for Quill editor content display */
+        .ql-editor-display {
+            font-family: 'Noto Sans Devanagari', sans-serif; /* Ensure consistent font */
+            line-height: 1.6; /* Improve readability */
+        }
+        .ql-editor-display h1, .ql-editor-display h2, .ql-editor-display h3 {
+            font-weight: bold;
+            margin-top: 1em;
+            margin-bottom: 0.5em;
+        }
+        .ql-editor-display h1 { font-size: 2em; }
+        .ql-editor-display h2 { font-size: 1.5em; }
+        .ql-editor-display h3 { font-size: 1.17em; }
+        .ql-editor-display p {
+            margin-bottom: 1em;
+        }
+        .ql-editor-display ul, .ql-editor-display ol {
+            margin-left: 1.5em;
+            margin-bottom: 1em;
+        }
+        .ql-editor-display a {
+            color: #ef4444; /* Red-500 */
+            text-decoration: underline;
+        }
+        .ql-editor-display img {
+            max-width: 100%;
+            height: auto;
+            display: block; /* Remove extra space below image */
+            margin: 1em auto; /* Center images */
+            border-radius: 0.375rem; /* rounded-md */
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <p class="mt-4 text-lg text-gray-700">लोड हो रहा है...</p>
+    </div>
+
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between">
+            <a href="#" class="flex items-center mb-4 md:mb-0 nav-link" data-section="home" id="site-logo-link">
+                <img src="https://placehold.co/40x40/ef4444/FFFFFF?text=CM" alt="क्रिकेट मंच Logo" class="w-10 h-10 rounded-full mr-3">
+                <h1 class="text-3xl font-bold text-gray-800">क्रिकेट मंच</h1>
+            </a>
+
+            <nav class="flex flex-wrap justify-center md:justify-end space-x-4 md:space-x-6 text-lg font-semibold" id="main-nav">
+                <a href="#" class="nav-link px-3 py-2 rounded-md text-gray-600 hover:text-red-500 hover:bg-gray-100 transition-colors duration-200 active" data-section="home">होम पेज</a>
+                <a href="#" class="nav-link px-3 py-2 rounded-md text-gray-600 hover:text-red-500 hover:bg-gray-100 transition-colors duration-200" data-section="news">न्यूज</a>
+                <a href="#" class="nav-link px-3 py-2 rounded-md text-gray-600 hover:text-red-500 hover:bg-gray-100 transition-colors duration-200" data-section="features">फीचर्स</a>
+                <a href="#" class="nav-link px-3 py-2 rounded-md text-gray-600 hover:text-red-500 hover:bg-gray-100 transition-colors duration-200" data-section="fantasy">फैंटसी</a>
+                <a href="#" class="nav-link px-3 py-2 rounded-md text-gray-600 hover:text-red-500 hover:bg-gray-100 transition-colors duration-200" data-section="women-cricket">महिला क्रिकेट</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <div id="user-id-display" class="bg-blue-100 text-blue-800 p-3 rounded-md mb-6 text-center shadow-sm hidden">
+            आपका यूजर आईडी: <span id="current-user-id" class="font-mono text-sm"></span>
+        </div>
+
+        <section id="home-section" class="current-section">
+            <div id="lead-news-container" class="bg-white rounded-lg shadow-lg overflow-hidden mb-8 article-card">
+                <div class="animate-pulse flex flex-col md:flex-row">
+                    <div class="w-full md:w-1/2 h-64 md:h-96 bg-gray-300"></div>
+                    <div class="p-6 md:w-1/2">
+                        <div class="h-8 bg-gray-300 rounded w-3/4 mb-4"></div>
+                        <div class="h-4 bg-gray-300 rounded w-full mb-2"></div>
+                        <div class="h-4 bg-gray-300 rounded w-5/6"></div>
+                    </div>
+                </div>
+            </div>
+
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-red-500 pb-2">अन्य सेक्शन से प्रमुख समाचार</h2>
+            <div id="other-news-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-white rounded-lg shadow-md overflow-hidden animate-pulse article-card">
+                    <div class="w-full h-40 bg-gray-300"></div>
+                    <div class="p-4">
+                        <div class="h-6 bg-gray-300 rounded w-full"></div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md overflow-hidden animate-pulse article-card">
+                    <div class="w-full h-40 bg-gray-300"></div>
+                    <div class="p-4">
+                        <div class="h-6 bg-gray-300 rounded w-full"></div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md overflow-hidden animate-pulse article-card">
+                    <div class="w-full h-40 bg-gray-300"></div>
+                    <div class="p-4">
+                        <div class="h-6 bg-gray-300 rounded w-full"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="news-section" class="hidden">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">न्यूज</h2>
+            <div id="news-content" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <p class="text-gray-600">यहां नवीनतम क्रिकेट समाचार प्रदर्शित होंगे।</p>
+            </div>
+        </section>
+
+        <section id="features-section" class="hidden">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">फीचर्स</h2>
+            <div id="features-content" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <p class="text-gray-600">यहां क्रिकेट से संबंधित विशेष लेख और फीचर्स प्रदर्शित होंगे।</p>
+            </div>
+        </section>
+
+        <section id="fantasy-section" class="hidden">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">फैंटसी</h2>
+            <div id="fantasy-content" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <p class="text-gray-600">यहां फैंटसी क्रिकेट टिप्स और अपडेट प्रदर्शित होंगे।</p>
+            </div>
+        </section>
+
+        <section id="women-cricket-section" class="hidden">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">महिला क्रिकेट</h2>
+            <div id="women-cricket-content" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <p class="text-gray-600">यहां महिला क्रिकेट से संबंधित समाचार और अपडेट प्रदर्शित होंगे।</p>
+            </div>
+        </section>
+
+        <section id="article-detail-section" class="hidden bg-white p-8 rounded-lg shadow-lg">
+            <button id="back-to-sections-btn" class="bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 mb-6 transition-colors duration-200">
+                <i class="fas fa-arrow-left mr-2"></i> वापस
+            </button>
+            <h2 id="article-detail-title" class="text-3xl md:text-4xl font-bold text-gray-900 mb-4"></h2>
+            <img id="article-detail-image" src="" alt="Article Image" class="w-full h-80 object-cover rounded-md mb-6">
+            <p id="article-detail-summary" class="text-gray-700 text-lg leading-relaxed mb-4"></p>
+            <div id="article-detail-main-content" class="ql-editor-display text-gray-800 mb-4"></div> <p class="text-gray-600 text-sm mb-1 hidden">URL: <span id="article-detail-url" class="font-mono"></span></p>
+            <p class="text-gray-600 text-sm mb-4 hidden">कीवर्ड्स: <span id="article-detail-keywords"></span></p>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-white py-6 mt-8">
+        <div class="container mx-auto px-4 text-center">
+            <p>&copy; 2025 क्रिकेट मंच। सभी अधिकार सुरक्षित।</p>
+            <p class="mt-2 text-sm">हमारे साथ जुड़ें:
+                <a href="#" class="text-blue-400 hover:underline mx-1"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="text-blue-600 hover:underline mx-1"><i class="fab fa-facebook"></i></a>
+                <a href="#" class="text-pink-500 hover:underline mx-1"><i class="fab fa-instagram"></i></a>
+            </p>
+        </div>
+    </footer>
+
+    <script async src="https://platform.twitter.com/widgets.js" charset="utf-8" onerror="console.error('Error loading Twitter widgets.js CDN.');"></script>
+
+    <script type="module">
+        // Updated Firebase SDK version to 10.7.0 for better compatibility and latest features
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
+        // Global variables for Firebase instances
+        let app;
+        let db;
+        let auth;
+        let userId;
+        let allArticles = []; // Store all fetched articles for easy lookup
+        let previousActiveSectionId = 'home-section'; // Track the section active before article detail was opened
+
+        // Firebase Initialization and Authentication
+        document.addEventListener('DOMContentLoaded', async () => {
+            const loadingOverlay = document.getElementById('loading-overlay');
+            loadingOverlay.style.display = 'flex'; // Show loading overlay
+            console.log("DOM Content Loaded. Starting Firebase initialization.");
+
+            try {
+                // User's provided Firebase config
+                const firebaseConfig = {
+                    apiKey: "AIzaSyCf0vmCykEADPcgRN7XVOe5kViz0uvDzzI",
+                    authDomain: "cricket-manch-97ac4.firebaseapp.com",
+                    projectId: "cricket-manch-97ac4",
+                    storageBucket: "cricket-manch-97ac4.firebasestorage.app",
+                    messagingSenderId: "699018444659",
+                    appId: "1:699018444659:web:1730ff0b70e6cd10404f06",
+                    measurementId: "G-F8VRDK50F8"
+                };
+                const appId = firebaseConfig.projectId; // Set appId from the provided projectId
+
+                console.log("Firebase Config being used:", firebaseConfig); // Log config
+                console.log("App ID being used for collections:", appId); // Log appId
+
+                // Initialize Firebase
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                console.log("Firebase app, db, auth initialized.");
+
+                // Authenticate user
+                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                if (initialAuthToken) {
+                    try {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                        console.log("Signed in with custom token.");
+                    } catch (tokenError) {
+                        console.warn("Custom token sign-in failed, attempting anonymous sign-in:", tokenError);
+                        await signInAnonymously(auth);
+                        console.log("Signed in anonymously after custom token failure.");
+                    }
+                } else {
+                    await signInAnonymously(auth);
+                    console.log("Signed in anonymously (no custom token provided).");
+                }
+
+                // Listen for auth state changes to get userId
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        // document.getElementById('current-user-id').innerText = userId; // This line is now effectively hidden by CSS
+                        console.log("User authenticated with ID:", userId);
+                        console.log("Calling setupFirestoreListeners...");
+                        // Once authenticated, start fetching data
+                        setupFirestoreListeners(appId);
+                    } else {
+                        userId = crypto.randomUUID();
+                        // document.getElementById('current-user-id').innerText = userId + " (अतिथि)"; // This line is now effectively hidden by CSS
+                        console.log("Signed in anonymously or using random ID:", userId);
+                        console.log("Calling setupFirestoreListeners...");
+                        setupFirestoreListeners(appId);
+                    }
+                });
+
+            } catch (error) {
+                console.error("Firebase initialization or authentication error:", error);
+                loadingOverlay.style.display = 'none';
+            }
+        });
+
+        // Function to set up Firestore listeners
+        function setupFirestoreListeners(appId) {
+            console.log("Setting up Firestore listeners for collection:", `artifacts/${appId}/public/data/articles`);
+            const articlesCollectionRef = collection(db, `artifacts/${appId}/public/data/articles`);
+
+            onSnapshot(articlesCollectionRef, (snapshot) => {
+                console.log("Firestore snapshot received.");
+                allArticles = []; // Clear previous articles
+                snapshot.forEach(doc => {
+                    allArticles.push({ id: doc.id, ...doc.data() });
+                });
+                console.log("Articles fetched:", allArticles.length);
+                renderArticles(allArticles); // Render articles on the page
+                document.getElementById('loading-overlay').style.display = 'none';
+                console.log("Loading overlay hidden.");
+
+            }, (error) => {
+                console.error("Error fetching articles from Firestore:", error);
+                document.getElementById('loading-overlay').style.display = 'none';
+            });
+        }
+
+        // Function to render articles(s) on the page
+        function renderArticles(articles) {
+            const leadNewsContainer = document.getElementById('lead-news-container');
+            const otherNewsContainer = document.getElementById('other-news-container');
+            const newsContent = document.getElementById('news-content');
+            const featuresContent = document.getElementById('features-content');
+            const fantasyContent = document.getElementById('fantasy-content');
+            const womenCricketContent = document.getElementById('women-cricket-content');
+
+            // Clear previous content
+            leadNewsContainer.innerHTML = '';
+            otherNewsContainer.innerHTML = '';
+            newsContent.innerHTML = '<p class="text-gray-600">यहां नवीनतम क्रिकेट समाचार प्रदर्शित होंगे।</p>';
+            featuresContent.innerHTML = '<p class="text-gray-600">यहां क्रिकेट से संबंधित विशेष लेख और फीचर्स प्रदर्शित होंगे।</p>';
+            fantasyContent.innerHTML = '<p class="text-gray-600">यहां फैंटसी क्रिकेट टिप्स और अपडेट प्रदर्शित होंगे।</p>';
+            womenCricketContent.innerHTML = '<p class="text-gray-600">यहां महिला क्रिकेट से संबंधित समाचार और अपडेट प्रदर्शित होंगे।</p>';
+
+            // Sort articles by timestamp (newest first, if timestamp exists)
+            const sortedArticles = articles.sort((a, b) => {
+                const tsA = a.timestamp ? a.timestamp.toDate().getTime() : 0;
+                const tsB = b.timestamp ? b.timestamp.toDate().getTime() : 0;
+                return tsB - tsA; // Descending order
+            });
+
+            let leadNewsRendered = false;
+            const otherSectionNews = {
+                'न्यूज': [],
+                'फीचर्स': [],
+                'फैंटसी': [],
+                'महिला क्रिकेट': []
+            };
+
+            sortedArticles.forEach(article => {
+                // Render Lead News
+                if (article.section === 'होम पेज लीड' && !leadNewsRendered) {
+                    leadNewsContainer.innerHTML = `
+                        <div class="flex flex-col md:flex-row article-card" data-id="${article.id}">
+                            <img src="${article.imageUrl || 'https://placehold.co/1200x600/000000/FFFFFF?text=Lead+News'}"
+                                 alt="${article.title}" class="w-full md:w-1/2 h-64 md:h-96 object-cover rounded-l-lg">
+                            <div class="p-6 md:w-1/2 flex flex-col justify-center">
+                                <h3 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">${article.title}</h3>
+                                <p class="text-gray-700 text-lg leading-relaxed">${article.summary || 'कोई सारांश उपलब्ध नहीं है।'}</p>
+                            </div>
+                        </div>
+                    `;
+                    leadNewsRendered = true;
+                } else if (otherSectionNews[article.section] && otherSectionNews[article.section].length < 3) { // Get top 3 for other sections
+                    otherSectionNews[article.section].push(article);
+                }
+
+                // Render content for specific sections
+                const cardHtml = `
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden transform transition-transform duration-200 hover:scale-105 article-card" data-id="${article.id}">
+                        <img src="${article.imageUrl || 'https://placehold.co/600x400/CCCCCC/333333?text=No+Image'}"
+                             alt="${article.title}" class="w-full h-40 object-cover">
+                        <div class="p-4">
+                            <h3 class="text-lg font-semibold text-gray-800">${article.title}</h3>
+                            ${article.summary ? `<p class="text-gray-600 text-sm mt-2 line-clamp-2">${article.summary}</p>` : ''}
+                        </div>
+                    </div>
+                `;
+
+                if (article.section === 'न्यूज') {
+                    if (newsContent.innerHTML.includes('यहां नवीनतम क्रिकेट समाचार प्रदर्शित होंगे।')) newsContent.innerHTML = '';
+                    newsContent.innerHTML += cardHtml;
+                } else if (article.section === 'फीचर्स') {
+                    if (featuresContent.innerHTML.includes('यहां क्रिकेट से संबंधित विशेष लेख और फीचर्स प्रदर्शित होंगे।')) featuresContent.innerHTML = '';
+                    featuresContent.innerHTML += cardHtml;
+                } else if (article.section === 'फैंटसी') {
+                    if (fantasyContent.innerHTML.includes('यहां फैंटसी क्रिकेट टिप्स और अपडेट प्रदर्शित होंगे।')) fantasyContent.innerHTML = '';
+                    fantasyContent.innerHTML += cardHtml;
+                } else if (article.section === 'महिला क्रिकेट') {
+                    if (womenCricketContent.innerHTML.includes('यहां महिला क्रिकेट से संबंधित समाचार और अपडेट प्रदर्शित होंगे।')) womenCricketContent.innerHTML = '';
+                    womenCricketContent.innerHTML += cardHtml;
+                }
+            });
+
+            // Render top content from other sections on Home Page
+            for (const sectionKey in otherSectionNews) {
+                otherSectionNews[sectionKey].forEach(article => {
+                    otherNewsContainer.innerHTML += `
+                        <div class="bg-white rounded-lg shadow-md overflow-hidden transform transition-transform duration-200 hover:scale-105 article-card" data-id="${article.id}">
+                            <img src="${article.imageUrl || 'https://placehold.co/600x400/CCCCCC/333333?text=No+Image'}"
+                                 alt="${article.title}" class="w-full h-40 object-cover">
+                            <div class="p-4">
+                                <h3 class="text-lg font-semibold text-gray-800">${article.title}</h3>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            // If no lead news was found, display a placeholder
+            if (!leadNewsRendered) {
+                leadNewsContainer.innerHTML = `
+                    <div class="flex flex-col md:flex-row bg-gray-100 rounded-lg p-6 text-center items-center justify-center h-96">
+                        <p class="text-gray-500 text-xl">अभी तक कोई मुख्य समाचार नहीं है।</p>
+                    </div>
+                `;
+            }
+
+            // If no other news was found, display a placeholder
+            if (otherNewsContainer.innerHTML === '') {
+                otherNewsContainer.innerHTML = `
+                    <div class="col-span-full bg-gray-100 rounded-lg p-6 text-center">
+                        <p class="text-gray-500 text-lg">अन्य सेक्शन से कोई प्रमुख समाचार नहीं है।</p>
+                    </div>
+                `;
+            }
+
+            // Add click listeners to all article cards
+            document.querySelectorAll('.article-card').forEach(card => {
+                card.addEventListener('click', (event) => {
+                    const articleId = event.currentTarget.dataset.id;
+                    const clickedArticle = allArticles.find(article => article.id === articleId);
+                    if (clickedArticle) {
+                        console.log("Clicked article details:", clickedArticle); // Add this log
+                        displayArticleDetails(clickedArticle); // Call new function to display details
+                    } else {
+                        console.warn("No article found for ID:", articleId); // This warning remains in console for debugging
+                    }
+                });
+            });
+        }
+
+        // Function to display article details in the dedicated section
+        function displayArticleDetails(article) {
+            const articleDetailSection = document.getElementById('article-detail-section');
+            const sections = document.querySelectorAll('main section'); // All main content sections
+
+            // Store the currently visible section before hiding all
+            const currentlyVisibleMainSection = Array.from(sections).find(sec => !sec.classList.contains('hidden') && sec.id !== 'article-detail-section');
+            if (currentlyVisibleMainSection) {
+                previousActiveSectionId = currentlyVisibleMainSection.id;
+                console.log("Storing previous active section:", previousActiveSectionId);
+            } else {
+                console.log("No main section visible, defaulting previousActiveSectionId to home-section.");
+                previousActiveSectionId = 'home-section'; // Fallback
+            }
+
+
+            // Hide all other sections
+            sections.forEach(sec => {
+                sec.classList.add('hidden');
+            });
+
+            // Populate the article detail section
+            document.getElementById('article-detail-title').innerText = article.title || 'कोई शीर्षक नहीं';
+            const imgElement = document.getElementById('article-detail-image');
+            if (article.imageUrl) {
+                imgElement.src = article.imageUrl;
+                imgElement.classList.remove('hidden');
+            } else {
+                imgElement.src = '';
+                imgElement.classList.add('hidden');
+            }
+            document.getElementById('article-detail-summary').innerText = article.summary || 'कोई सारांश उपलब्ध नहीं है।';
+            // Display main content as HTML
+            document.getElementById('article-detail-main-content').innerHTML = article.mainContent || '<p>कोई मुख्य सामग्री उपलब्ध नहीं है।</p>';
+            
+            // Twitter embed rendering logic with a small delay
+            // This ensures the HTML is in the DOM before widgets.js tries to process it
+            setTimeout(() => {
+                if (typeof twttr !== 'undefined' && twttr.widgets) {
+                    twttr.widgets.load(document.getElementById('article-detail-main-content')).then(() => {
+                        console.log("Twitter widgets loaded for article content.");
+                    }).catch(err => {
+                        console.error("Error loading Twitter widgets:", err);
+                    });
+                } else {
+                    console.warn("Twitter widgets.js not loaded or twttr.widgets is undefined. Twitter embeds might not render.");
+                }
+            }, 100); // 100ms delay
+
+
+            // URL and Keywords are now hidden via CSS
+            // document.getElementById('article-detail-url').innerText = article.urlSlug || 'उपलब्d नहीं'; // Hidden
+            // document.getElementById('article-detail-keywords').innerText = article.seoKeywords || 'उपलब्d नहीं'; // Hidden
+
+            // Show the article detail section
+            articleDetailSection.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top
+        }
+
+        // Event listener for the "Back" button in article detail section
+        document.getElementById('back-to-sections-btn').addEventListener('click', () => {
+            const articleDetailSection = document.getElementById('article-detail-section');
+            const sectionToReturnTo = document.getElementById(previousActiveSectionId);
+
+            console.log("Returning to section:", previousActiveSectionId);
+
+            articleDetailSection.classList.add('hidden'); // Hide article detail
+            if (sectionToReturnTo) {
+                sectionToReturnTo.classList.remove('hidden'); // Show the previous section
+            } else {
+                // Fallback if previous section somehow doesn't exist
+                document.getElementById('home-section').classList.remove('hidden');
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top
+        });
+
+
+        // Navigation logic
+        const navElement = document.querySelector('header nav'); // Get the parent nav element
+        const sections = document.querySelectorAll('main section');
+
+        if (navElement) { // Ensure nav element exists
+            navElement.addEventListener('click', (e) => {
+                // Find the closest ancestor that is a nav-link
+                const clickedLink = e.target.closest('.nav-link');
+
+                if (!clickedLink || !clickedLink.dataset.section) {
+                    // If click was not on a nav-link or it doesn't have data-section, do nothing
+                    console.log("Click ignored: Not a valid nav-link or missing data-section.");
+                    return;
+                }
+
+                e.preventDefault(); // Prevent default link behavior
+                console.log("Clicked nav link (delegated):", clickedLink);
+
+                // Remove active class from ALL nav links
+                document.querySelectorAll('.nav-link').forEach(navItem => {
+                    navItem.classList.remove('active');
+                });
+
+                // Add active class to the CURRENTLY CLICKED link
+                clickedLink.classList.add('active'); // This line should now be safe
+
+                const targetSectionId = clickedLink.dataset.section + '-section';
+                console.log("Target section ID:", targetSectionId);
+
+
+                // Store the ID of the section we are navigating FROM
+                const currentlyVisibleMainSection = Array.from(sections).find(sec => !sec.classList.contains('hidden') && sec.id !== 'article-detail-section');
+                if (currentlyVisibleMainSection) {
+                    previousActiveSectionId = currentlyVisibleMainSection.id;
+                    console.log("Storing previous active section:", previousActiveSectionId);
+                } else {
+                    previousActiveSectionId = 'home-section';
+                    console.log("No main section visible, defaulting previousActiveSectionId to home-section.");
+                }
+
+                // Hide all sections, including article detail
+                sections.forEach(sec => sec.classList.add('hidden'));
+                console.log("All sections hidden.");
+
+                // Show the target section
+                const targetSection = document.getElementById(targetSectionId);
+                if (targetSection) {
+                    targetSection.classList.remove('hidden');
+                    console.log("Target section shown:", targetSectionId);
+                } else {
+                    console.error("Target section not found:", targetSectionId);
+                }
+
+                // If navigating to a new section, hide the article detail section (redundant but safe)
+                const articleDetailSection = document.getElementById('article-detail-section');
+                if (articleDetailSection) {
+                    articleDetailSection.classList.add('hidden');
+                }
+
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        } else {
+            console.error("Navigation element not found. Cannot attach click listener.");
+        }
+    </script>
+</body>
+</html>
+```
